@@ -1,0 +1,3 @@
+cmyui
+discord.py
+saucenao_api
