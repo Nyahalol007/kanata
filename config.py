@@ -1,3 +1,3 @@
-token = ''
+token = 'ODc2MDA3OTQ0ODE3MzUyNzI0.YRdz-Q.ASv_XPWeEx6OjZu8m8OaYbqI8Vc'
 
-nao_key = ''
+nao_key = '54be4be0861bf172289580e9eec9ba47c71df4f5'
