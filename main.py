@@ -14,7 +14,7 @@ log('Connecting to Discord server', Ansi.GRAY)
 async def on_message(message):
     if message.content in ['วาป', 'ขอวาป', 'warp', 'ขอวาปหน่อย', 'อยากได้วาป', 'วาปหน่อย']:
         if message.attachments:
-            f = await message.channel.send(f'{message.author.mention} กำลังหาให้อยู่นะคะ ใ จ เ ย็ น เ ย็ น ค่ะ')
+            f = await message.channel.send(f'{message.author.mention} กำลังหาให้อยู่นะคะ')
             res = sauce.from_url(message.attachments[0].url)
             await f.delete()
             e = []
