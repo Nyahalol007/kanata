@@ -19,16 +19,22 @@ async def help(ctx):
 
 @client.command()
 async def play(ctx, url: str):
-    song_there = os.path.isfile('song.mp3')
+    check = os.path.isfile(f'{ctx.guild.id}.mp3')
     try:
-        if song_there:
-            os.remove('song.mp3')
+        if check:
+            os.remove(f'{ctx.guild.id}.mp3')
     except PermissionError:
         await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
         return
 
+    await ctx.send('กำลังเปิดเพลงให้ค่ะ โปรดรอสักครู่')
     voiceChannel = discord.utils.get(ctx.guild.voice_channels, name='General')
-    await voiceChannel.connect()
+
+    try:
+        await voiceChannel.connect()
+    except:
+        pass
+
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
     ydl_opts = {
@@ -43,9 +49,8 @@ async def play(ctx, url: str):
         ydl.download([url])
     for file in os.listdir('./'):
         if file.endswith('.mp3'):
-            os.rename(file, 'song.mp3')
-    await ctx.send('กำลังเปิดเพลงให้ค่ะ โปรดรอสักครู่')
-    voice.play(discord.FFmpegPCMAudio('song.mp3'))
+            os.rename(file, f'{ctx.guild.id}.mp3')
+    voice.play(discord.FFmpegPCMAudio(f'{ctx.guild.id}.mp3'))
 
 @client.command()
 async def pause(ctx):
