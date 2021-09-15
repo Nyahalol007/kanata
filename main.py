@@ -17,9 +17,6 @@ log('Connecting to Discord server', Ansi.GRAY)
 async def help(ctx):
     t1 = await ctx.send('```!play [url], !pause, !resume, !stop, !leave```')
     t2 = await ctx.send('```อยากได้วาป พิม "!warp" พร้อมแนบรูป```')
-    await asyncio.sleep(15)
-    await t2.delete()
-    await t1.delete()
 
 @client.command()
 async def play(ctx, url: str):
@@ -50,42 +47,32 @@ async def play(ctx, url: str):
     for file in os.listdir('./'):
         if file.endswith('.mp3'):
             os.rename(file, 'song.mp3')
-    t = await ctx.send('กำลังเปิดเพลงค่ะ โปรดรอสักครู่')
+    await ctx.send('กำลังเปิดเพลงค่ะ โปรดรอสักครู่')
     voice.play(discord.FFmpegPCMAudio('song.mp3'))
-    await asyncio.sleep(10)
-    await t.delete()
 
 @client.command()
 async def pause(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing():
-        t = await ctx.send('กำลังหยุดให้ค่ะ')
+        await ctx.send('กำลังหยุดให้ค่ะ')
         voice.pause()
-        await asyncio.sleep(10)
-        await t.delete()
     else:
-        t = await ctx.send('ตอนนี้ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ')
-        await asyncio.sleep(10)
-        await t.delete()
+        await ctx.send('ตอนนี้ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ')
 
 @client.command()
 async def resume(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_paused():
-        t = await ctx.send('กำลังเริ่มเล่นให้ค่ะ')
+        await ctx.send('กำลังเริ่มเล่นให้ค่ะ')
         voice.resume()
-        await asyncio.sleep(10)
-        await t.delete()
     else:
         await ctx.send('เพลงกำลังเล่นอยู่แล้วค่ะ')
 
 @client.command()
 async def stop(ctx):
-    t = await ctx.send('กำลังหยุดให้ค่ะ')
+    await ctx.send('กำลังหยุดให้ค่ะ')
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     voice.stop()
-    await asyncio.sleep(10)
-    await t.delete()
 
 @client.command()
 async def leave(ctx):
@@ -98,14 +85,14 @@ async def leave(ctx):
 @client.command()
 async def warp(ctx):
     await ctx.send('ส่งรูปด้วยค่ะ')
-    
+
     def check(message):
         attachments = message.attachments
         if len(attachments) == 0:
             return False
         attachment = attachments[0]
         return attachment.filename.endswith(('.jpg', '.png'))
-        
+
     msg = await client.wait_for('message', check=check)
     image = msg.attachments[0]
 
@@ -117,18 +104,21 @@ async def warp(ctx):
         for i in res:
             if i.urls and i.similarity > 70:
                 e.append(i)
-        embed = discord.Embed(title=f'ผลจากการค้นหา | มี {len(e)} วาป', color=0xa5fe9f)
-        embed.set_author(name=f'วาปของ {ctx.author}', icon_url=ctx.author.avatar_url)
+        embed = discord.Embed(
+            title=f'ผลจากการค้นหา | มี {len(e)} วาป', color=0xa5fe9f)
+        embed.set_author(
+            name=f'วาปของ {ctx.author}', icon_url=ctx.author.avatar_url)
         for i in res:
             if i.urls and i.similarity > 70:
-                embed.add_field(name=f'[{i.author}] {i.title} | ✅ {i.similarity}%', value=f'{i.urls[0]}', inline=False)
+                embed.add_field(
+                    name=f'[{i.author}] {i.title} | ✅ {i.similarity}%', value=f'{i.urls[0]}', inline=False)
         embed.set_footer(text='ได้แล้วก็เก็บไว้ด้วยค่ะ')
-        
+
         if not e:
-            return await ctx.send(f'{ctx.author.mention} หาวาปไม่เจอค่ะ สมน้ำหน้าคน horny ค่ะ')
-        
+            return await ctx.send(f'{ctx.author.mention} หาวาปไม่เจอค่ะ สมน้ำหน้าค่ะ')
+
         return await ctx.send(embed=embed)
-    else: 
+    else:
         t = await ctx.send(f'{ctx.author.mention} ไหนรูปคะ แนบรูปมาด้วยค่ะ')
         await asyncio.sleep(5)
         await t.delete()
