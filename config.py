@@ -1,3 +1,0 @@
-token = ''
-
-nao_key = ''
