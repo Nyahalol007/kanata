@@ -15,8 +15,7 @@ log('Connecting to Discord server', Ansi.GRAY)
 
 @client.command()
 async def help(ctx):
-    t1 = await ctx.send('```!play [url], !pause, !resume, !stop, !leave```')
-    t2 = await ctx.send('```อยากได้วาป พิม "!warp" พร้อมแนบรูป```')
+    await ctx.send('```!play [url], !pause, !resume, !stop, !leave \n\n!play มีใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
 
 @client.command()
 async def play(ctx, url: str):
@@ -25,9 +24,7 @@ async def play(ctx, url: str):
         if song_there:
             os.remove('song.mp3')
     except PermissionError:
-        t = await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
-        await asyncio.sleep(10)
-        await t.delete()
+        await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
         return
 
     voiceChannel = discord.utils.get(ctx.guild.voice_channels, name='General')
@@ -47,7 +44,7 @@ async def play(ctx, url: str):
     for file in os.listdir('./'):
         if file.endswith('.mp3'):
             os.rename(file, 'song.mp3')
-    await ctx.send('กำลังเปิดเพลงค่ะ โปรดรอสักครู่')
+    await ctx.send('กำลังเปิดเพลงให้ค่ะ โปรดรอสักครู่')
     voice.play(discord.FFmpegPCMAudio('song.mp3'))
 
 @client.command()
@@ -78,6 +75,7 @@ async def stop(ctx):
 async def leave(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_connected():
+        await ctx.send('bye bye ค่าาา')
         await voice.disconnect()
     else:
         await ctx.send('ตอนนี้ไม่ได้เข้าห้องไหนอยู่นะคะ คนพิมมั่วแล้วค่ะ')
@@ -125,7 +123,7 @@ async def warp(ctx):
 
 @client.event
 async def on_ready():
-    activity = discord.Game(name='!help | Modified by Gusbell', type=3)
+    activity = discord.Game(name='!help | By Gusbell', type=3)
     await client.change_presence(status=discord.Status.online, activity=activity)
     log('This bot has started ⚡️', Ansi.GREEN)
 
