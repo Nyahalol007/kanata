@@ -1,11 +1,20 @@
-import os
-import discord
-import youtube_dl
-import asyncio
 from ext import config
+
+import discord
 from discord.ext import commands
+from discord.utils import get
+
+import os
+import asyncio
+import youtube_dl
+
 from cmyui import log, Ansi
 from saucenao_api import SauceNao
+
+from pydub import AudioSegment
+
+import math
+import numpy as np
 
 sauce = SauceNao(api_key=config.nao_key)
 
@@ -13,22 +22,34 @@ client = commands.Bot(command_prefix='!', help_command=None)
 
 log('Connecting to Discord server', Ansi.GRAY)
 
+def bass_line_freq(track):
+    sample_track = list(track)
+
+    est_mean = np.mean(sample_track)
+
+    est_std = 3 * np.std(sample_track) / (math.sqrt(2))
+
+    bass_factor = int(round((est_std - est_mean) * 0.005))
+
+    return bass_factor
+
+@client.event
+async def on_ready():
+    activity = discord.Game(name='!help | By Gusbell', type=3)
+    await client.change_presence(status=discord.Status.online, activity=activity)
+    log('This bot has started ⚡️', Ansi.GREEN)
+
 @client.command()
 async def help(ctx):
     await ctx.send('```!play [url], !pause, !resume, !stop, !leave \n\n!play มีใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
 
 @client.command()
-async def play(ctx, url: str):
+async def play(ctx, url :str):
     check = os.path.isfile(f'{ctx.guild.id}.mp3')
     channel = ctx.author.voice.channel
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': f'{ctx.guild.id}.mp3',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
+        'outtmpl': f'{ctx.guild.id}.mp3'
     }
 
     try:
@@ -42,7 +63,7 @@ async def play(ctx, url: str):
     except:
         pass
 
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice = get(client.voice_clients, guild=ctx.guild)
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
@@ -50,36 +71,80 @@ async def play(ctx, url: str):
 
 @client.command()
 async def pause(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice = get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing():
-        await ctx.send('กำลังหยุดให้ค่ะ')
         voice.pause()
     else:
         await ctx.send('ตอนนี้ไม่มีเพลงที่กำลังเล่นอยู่ค่ะ')
 
 @client.command()
 async def resume(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice = get(client.voice_clients, guild=ctx.guild)
     if voice.is_paused():
-        await ctx.send('กำลังเริ่มเล่นให้ค่ะ')
         voice.resume()
     else:
         await ctx.send('เพลงกำลังเล่นอยู่แล้วค่ะ')
 
 @client.command()
 async def stop(ctx):
-    await ctx.send('กำลังหยุดให้ค่ะ')
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice = get(client.voice_clients, guild=ctx.guild)
     voice.stop()
 
 @client.command()
 async def leave(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    if voice.is_connected():
-        await ctx.send('bye bye ค่าาา')
+    voice = get(client.voice_clients, guild=ctx.guild)
+    try:
         await voice.disconnect()
-    else:
+    except:
         await ctx.send('ตอนนี้ไม่ได้เข้าห้องไหนอยู่นะคะ คนพิมมั่วแล้วค่ะ')
+
+@client.command()
+async def boost(ctx, url :str):
+    check = os.path.isfile(f'{ctx.guild.id}.mp3')
+    check2 = os.path.isfile(f'{ctx.guild.id}-boost.mp3')
+    channel = ctx.author.voice.channel
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
+    try:
+        if check:
+            os.remove(f'{ctx.guild.id}.mp3')
+        if check2:
+            os.remove(f'{ctx.guild.id}-boost.mp3')
+    except:
+        await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
+
+    try:
+        await channel.connect()
+    except:
+        pass
+    
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    for file in os.listdir('./'):
+        if file.endswith('.mp3'):
+            os.rename(file, f'{ctx.guild.id}.mp3')
+
+    attenuate_db = 0
+    accentuate_db = 50
+    
+    await ctx.send('กำลัง boost ให้ค่ะ')
+
+    sample = AudioSegment.from_mp3(f'{ctx.guild.id}.mp3')
+    filtered = sample.low_pass_filter(bass_line_freq(sample.get_array_of_samples()))
+
+    combined = (sample - attenuate_db).overlay(filtered + accentuate_db)
+    combined.export(str(ctx.guild.id) + "-boost.mp3", format="mp3")
+    
+    voice = get(client.voice_clients, guild=ctx.guild)
+
+    voice.play(discord.FFmpegPCMAudio(f'{ctx.guild.id}-boost.mp3')) 
 
 @client.command()
 async def warp(ctx):
@@ -104,7 +169,7 @@ async def warp(ctx):
             if i.urls and i.similarity > 70:
                 e.append(i)
         embed = discord.Embed(
-            title=f'ผลจากการค้นหา | มี {len(e)} วาป', color=0xa5fe9f)
+            title=f'ผลจากการค้นหา | มี {len(e)} วาร์ป', color=0xa5fe9f)
         embed.set_author(
             name=f'วาปของ {ctx.author}', icon_url=ctx.author.avatar_url)
         for i in res:
@@ -121,11 +186,5 @@ async def warp(ctx):
         t = await ctx.send(f'{ctx.author.mention} ไหนรูปคะ แนบรูปมาด้วยค่ะ')
         await asyncio.sleep(5)
         await t.delete()
-
-@client.event
-async def on_ready():
-    activity = discord.Game(name='!help | By Gusbell', type=3)
-    await client.change_presence(status=discord.Status.online, activity=activity)
-    log('This bot has started ⚡️', Ansi.GREEN)
 
 client.run(config.token)
