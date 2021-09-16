@@ -41,7 +41,7 @@ async def on_ready():
 
 @client.command()
 async def help(ctx):
-    await ctx.send('```!play [url], !pause, !resume, !stop, !leave \n\n!play มีใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
+    await ctx.send('```!play [url], !boost [url],!pause, !resume, !stop, !leave \n\n!play, !boost ใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
 
 @client.command()
 async def play(ctx, url :str):
