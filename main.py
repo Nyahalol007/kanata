@@ -20,36 +20,32 @@ async def help(ctx):
 @client.command()
 async def play(ctx, url: str):
     check = os.path.isfile(f'{ctx.guild.id}.mp3')
-    try:
-        if check:
-            os.remove(f'{ctx.guild.id}.mp3')
-    except PermissionError:
-        await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
-        return
-
-    await ctx.send('กำลังเปิดเพลงให้ค่ะ โปรดรอสักครู่')
-    voiceChannel = discord.utils.get(ctx.guild.voice_channels, name='General')
-
-    try:
-        await voiceChannel.connect()
-    except:
-        pass
-
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-
+    channel = ctx.author.voice.channel
     ydl_opts = {
         'format': 'bestaudio/best',
+        'outtmpl': f'{ctx.guild.id}.mp3',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
     }
+
+    try:
+        if check:
+            os.remove(f'{ctx.guild.id}.mp3')
+    except:
+        await ctx.send('รอเพลงที่กำลังเล่นอยู่จบก่อนไม่ก็พิม !stop ค่ะ')
+
+    try:
+        await channel.connect()
+    except:
+        pass
+
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    for file in os.listdir('./'):
-        if file.endswith('.mp3'):
-            os.rename(file, f'{ctx.guild.id}.mp3')
     voice.play(discord.FFmpegPCMAudio(f'{ctx.guild.id}.mp3'))
 
 @client.command()
