@@ -6,6 +6,7 @@ from discord.utils import get
 
 import os
 import asyncio
+import requests
 import youtube_dl
 
 from cmyui import log, Ansi
@@ -22,17 +23,6 @@ client = commands.Bot(command_prefix='!', help_command=None)
 
 log('Connecting to Discord server', Ansi.GRAY)
 
-def bass_line_freq(track):
-    sample_track = list(track)
-
-    est_mean = np.mean(sample_track)
-
-    est_std = 3 * np.std(sample_track) / (math.sqrt(2))
-
-    bass_factor = int(round((est_std - est_mean) * 0.005))
-
-    return bass_factor
-
 @client.event
 async def on_ready():
     activity = discord.Game(name='!help | By Gusbell', type=3)
@@ -41,10 +31,10 @@ async def on_ready():
 
 @client.command()
 async def help(ctx):
-    await ctx.send('```!play [url], !boost [url],!pause, !resume, !stop, !leave \n\n!play, !boost ใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
+    await ctx.send('```!play [name], !boost [url], !pause, !resume, !stop, !leave \n\n!boost ใส่ได้แค่ url เพลงนะคะ ใส่ชื่อเพลงไม่ได้เพราะ Gusbell ขี้เกียจค่ะ \n\nอยากได้วาร์ปรูป พิม "!warp" พร้อมแนบรูป \n\nเจ้าของ >>> https://github.com/Gusb3ll```')
 
 @client.command()
-async def play(ctx, url :str):
+async def play(ctx, name :str):
     check = os.path.isfile(f'{ctx.guild.id}.mp3')
     channel = ctx.author.voice.channel
     ydl_opts = {
@@ -64,9 +54,13 @@ async def play(ctx, url :str):
         pass
 
     voice = get(client.voice_clients, guild=ctx.guild)
-
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        try:
+            requests.get(name) 
+        except:
+            ydl.extract_info(f"ytsearch:{name}", download=True)['entries'][0]
+        else:
+            ydl.extract_info(name, download=True)
     voice.play(discord.FFmpegPCMAudio(f'{ctx.guild.id}.mp3'))
 
 @client.command()
@@ -111,6 +105,13 @@ async def boost(ctx, url :str):
             'preferredquality': '192',
         }],
     }
+
+    def bass_line_freq(track):
+        sample_track = list(track)
+        est_mean = np.mean(sample_track)
+        est_std = 3 * np.std(sample_track) / (math.sqrt(2))
+        bass_factor = int(round((est_std - est_mean) * 0.005))
+        return bass_factor
 
     try:
         if check:
